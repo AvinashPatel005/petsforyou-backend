@@ -1,0 +1,18 @@
+{
+    "plan_basic":{
+      "id": "plan_basic",
+      "name": "BASIC",
+      "price": 499
+    },
+    "plan_standard":{
+      "id": "plan_standard",
+      "name": "STANDARD",
+      "price": 899
+    },
+    "plan_extended":{
+      "id": "plan_extended",
+      "name": "EXTENDED",
+      "price": 1499
+    }
+}
+  

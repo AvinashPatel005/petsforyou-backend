@@ -2,18 +2,21 @@ const express = require("express")
 const dotenv = require("dotenv")
 const cors = require("cors")
 const cookieParser  = require("cookie-parser")
-
 const connectDB = require("./lib/db.js")
 const authRoutes = require("./routes/auth.route.js")
 const productRoutes = require("./routes/product.route.js")
 const cartRoutes = require("./routes/cart.route.js")
 const shopRoutes = require("./routes/shop.route.js")
+const subscriptionRoutes = require("./routes/subscription.route.js")
 dotenv.config()
 
 
 const app = express()
 
-app.use(cors())
+app.use(cors({
+    origin: "http://localhost:5173", // Adjust this to match your frontend URL
+    credentials: true, // ✅ Allow cookies
+  }))
 app.use(express.json())
 app.use(cookieParser())
 
@@ -25,10 +28,11 @@ app.listen(PORT,()=>{
 })
 
 app.get("/",(req,res)=>{
-    res.send("Hello World")
+    res.send("Hello Worlds")
 })
 
 app.use("/api/auth",authRoutes)
 app.use("/api/product",productRoutes)
 app.use("/api/cart",cartRoutes)
 app.use("/api/shop",shopRoutes)
+app.use("/api/subscription",subscriptionRoutes)
