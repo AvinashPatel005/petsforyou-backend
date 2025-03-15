@@ -2,10 +2,10 @@ const Subscription = require("../models/subscription.model");
 
 const validateSubscription = async (req, res, next) => {
   try {
-    const userId = req.user._id;
+    const user = req.user._id;
 
     const subscriptions = await Subscription.find({ 
-      userId, 
+      user, 
       endDate: { $gt: new Date() }
     });
 

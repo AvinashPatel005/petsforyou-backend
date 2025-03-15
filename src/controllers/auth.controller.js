@@ -1,9 +1,11 @@
 const bcrypt = require("bcryptjs");
 
-const { generateToken, generateOTP} = require("../lib/utils.js");
+const { generateToken, generateOTP } = require("../lib/utils.js");
 
 const User = require("../models/user.model.js");
 const OTP = require('../models/otp.model.js');
+const Address = require("../models/address.model.js");
+
 const cloudinary = require("../lib/cloudinary.js");
 const sendMail = require("../lib/email.js");
 
@@ -27,7 +29,7 @@ const signup = async (req, res) => {
 
         const otp = generateOTP()
         // const mailRes = await sendMail(email,"Your OTP Code",`Your OTP is: ${otp}.\n\nIt is valid for 5 minutes.\n\nThank you`);
-        
+
         // if (!mailRes.success) {
         //     return res.status(500).json({ message: "Failed to send OTP" });
         // }
@@ -79,7 +81,7 @@ const verifyOtp = async (req, res) => {
             generateToken(newUser._id, res)
             await newUser.save();
 
-            const subject = `Welcome ${fullname}` ;
+            const subject = `Welcome ${fullname}`;
             const text = `Hello,\n\nYour email has been successfully verified. You can now access our platform.\n\nThank you!`;
             // sendMail(email, subject, text);
 
@@ -138,9 +140,9 @@ const logout = (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const { dp,fullname,age } = req.body
+        const { dp, fullname, age } = req.body
         const userId = req.user._id
-        if(!(age || fullname || dp)){
+        if (!(age || fullname || dp)) {
             res.status(400).json({ message: "Atleast one field required" })
         }
         let dpUrl = ""
@@ -148,14 +150,70 @@ const updateProfile = async (req, res) => {
             const uploadResponse = await cloudinary.uploader.upload(dp)
             dpUrl = uploadResponse.secure_url
         }
-        
-        const updatedUser = await User.findByIdAndUpdate(userId, { dp:dpUrl,fullname,age }, { new: true }).select("-password")
+
+        const updatedUser = await User.findByIdAndUpdate(userId, { dp: dpUrl, fullname, age }, { new: true }).select("-password")
 
         res.status(200).json(updatedUser)
 
     } catch (error) {
         console.log("Error in UpdateProfile Controller", error)
         res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+const listAddress = async (req, res) => {
+    try {
+        const user = req.user._id
+        const address = await Address.find({ user }).select("-user")
+        res.status(200).json(address)
+    } catch (error) {
+        console.log("Error in ListAddress Controller", error)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+
+}
+
+const addAddress = async (req, res) => {
+    try {
+        const user = req.user._id
+        const { phone, street, city, state, zip, country } = req.body
+
+        if (!phone || !street || !city || !state || !zip || !country) {
+            res.status(400).json({ message: "All fields required" })
+        }
+
+        const address = new Address({
+            user,
+            phone,
+            street,
+            city,
+            state,
+            zip,
+            country
+        })
+
+        await address.save()
+        res.status(200).json(address)
+
+    } catch (error) {
+        console.log("Error in AddAddress Controller", error)
+        res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+const updateAddress = async (req, res) => {
+    try {
+        const addressId = req.params.id
+        const address = await Address.findById(addressId)
+        if (!address) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+        if (address.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: "Unauthorized to update this Address" })
+        }
+        const updatedAddress = await Address.findByIdAndUpdate(addressId, req.body, { new: true })
+        return res.status(200).json({ message: "Address Updated Successfully", updatedAddress })
+
+    } catch (error) {
+        res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -174,5 +232,8 @@ module.exports = {
     login,
     logout,
     updateProfile,
+    listAddress,
+    addAddress,
+    updateAddress,
     checkAuth
 }

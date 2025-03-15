@@ -72,7 +72,7 @@ const updateShop = async (req, res) => {
         }
 
         const updatedShop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json({ message: "Shop updated successfully", updatedShop });
+        res.status(200).json({ message: "Shop updated successfully", updatedShop });
     } catch (error) {
         res.status(500).json({ message:"Internal Server Error" });
     }

@@ -11,7 +11,7 @@ const createSubscription = async (req, res) => {
     if (!Object.keys(subscriptionList).includes(planId)) {
         return res.status(400).json({ message: "Invalid plan ID" });
     }
-    const userId = req.user._id
+    const user = req.user._id
     const subscription = subscriptionList[planId]
     const amount = subscription.price * 100
 
@@ -22,8 +22,9 @@ const createSubscription = async (req, res) => {
             receipt: `receipt_${Date.now()}`,
             payment_capture: 1,
             notes: {
-                userId: userId,
+                user: user,
                 planId: planId,
+                target:"subscription"
             },
         });
 
@@ -48,14 +49,17 @@ const confirmSubscription = async (req, res) => {
 
         if (req.body.event === "payment.captured") {
             const { id: razorpayTransactionId, notes } = req.body.payload.payment.entity;
-            const userId = notes?.userId;
+            if(notes.target != "subscription"){
+                return res.status(400).json({ message: "Invalid transaction" });
+            }
+            const user = notes?.user;
             const planId = notes?.planId;
             const startDate = new Date();
             const endDate = new Date(startDate);
             endDate.setDate(startDate.getDate() + 30);
 
             const subscription = new Subscription({
-                userId,
+                user,
                 planId,
                 status: "active",
                 startDate,
@@ -76,10 +80,10 @@ const confirmSubscription = async (req, res) => {
 
 const getUserSubscription = async (req, res) => {
     try {
-        const userId = req.user._id;
+        const user = req.user._id;
 
         const subscriptions = await Subscription.find({
-            userId,
+            user,
             endDate: { $gt: new Date() }
         });
 
