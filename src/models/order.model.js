@@ -51,6 +51,10 @@ const OrderSchema = new mongoose.Schema({
         enum: ["COD","RazorPay"],
         required: true
     },
+    orderId: {
+        type: String,
+        default: null
+    },
     transactionId: {
         type: String,
         default: null

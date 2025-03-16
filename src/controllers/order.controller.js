@@ -75,7 +75,7 @@ const placeOrder = async (req, res) => {
             discount,
             shippingAddress,
             paymentMethod,
-            transactionId: orderId || null,
+            orderId: orderId || null,
             status: paymentMethod !== "COD" ? "Pending" : "Confirmed",
         });
         
@@ -122,13 +122,13 @@ const confirmOrder = async (req, res) => {
         }
 
         if (req.body.event === "payment.captured") {
-            const { order_id: transactionId, notes } = req.body.payload.payment.entity;
+            const { order_id: orderId,id, notes } = req.body.payload.payment.entity;
 
             if (notes.target != "order") {
                 return res.status(400).json({ message: "Invalid transaction" });
             }
 
-            const order = await Order.findOne({ transactionId });
+            const order = await Order.findOne({ orderId });
             if (!order) {
                 return res.status(404).json({ message: "Order not found" });
             }
@@ -145,6 +145,7 @@ const confirmOrder = async (req, res) => {
             }
 
             order.status = "Confirmed";
+            order.transactionId = id
             await order.save();
 
 
@@ -163,7 +164,6 @@ const processRefund = async (transactionId, amount) => {
         const refund = await razorpay.payments.refund(transactionId, {
             amount: parseInt(amount) * 100
         });
-        console.log("Refund successful:", refund);
         return true;
     } catch (error) {
         console.error("Refund failed:", error);
@@ -200,7 +200,7 @@ const cancelOrder = async (req, res) => {
                 return res.status(400).json({ message: "Transaction ID not found for refund" });
             }
             
-            const refundSuccess = await processRefund(order.transactionId, order.totalAmount+order.charges);
+            const refundSuccess = await processRefund(order.transactionId, order.totalAmount+order.charges-order.discount);
             if (!refundSuccess) {
                 return res.status(400).json({ message: "Refund processing failed" });
             }
