@@ -28,6 +28,10 @@ const OrderSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
+    charges:{
+        type:Number,
+        default:40
+    },
     discount:{
         type:Number,
         default:0,
